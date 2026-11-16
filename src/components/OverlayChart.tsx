@@ -1,3 +1,4 @@
+import { absoluteCurrentRows, formatCurrent } from "../utils/currentDisplay";
 import { useCallback, useMemo, useRef, useEffect, useState } from "react";
 import {
   Chart as ChartJS,
@@ -101,6 +102,8 @@ interface OverlayChartProps {
   /** Cap legend height so many traces scroll instead of stretching the page. */
   legendMaxHeight?: number;
   yUnit?: string;
+  /** Display current magnitude, preserving the signed source samples. */
+  absoluteValues?: boolean;
   /** Line segments colored by `eventCounter`; ADC role from label/dash. */
   colorByEvent?: boolean;
   eventLabels?: Map<number, string>;
@@ -268,6 +271,7 @@ export default function OverlayChart({
   showLegend = true,
   legendMaxHeight,
   yUnit = "V",
+  absoluteValues = false,
   colorByEvent = false,
   eventLabels,
   resolveEventVisual,
@@ -285,17 +289,30 @@ export default function OverlayChart({
 
   const denoiseActive = globalDenoise || localDenoise;
 
+  const magnitudeSeries = useMemo(() => absoluteValues
+    ? series.map((s) => ({ ...s, points: absoluteCurrentRows(s.points, s.column ?? column) }))
+    : series, [series, column, absoluteValues]);
+
   const effectiveSeries = useMemo(() => {
-    if (!denoiseActive) return series;
+    if (!denoiseActive) return magnitudeSeries;
     const params = denoiseParams ?? DEFAULT_DENOISE_PARAMS;
-    return series.map((s) => {
+    return magnitudeSeries.map((s) => {
       if (s.points.length === 0) return s;
       const col = s.column ?? column;
-      return { ...s, points: denoiseDataRows(s.points, col, params) };
+      const points = denoiseDataRows(s.points, col, params);
+      return { ...s, points: absoluteValues ? absoluteCurrentRows(points, col) : points };
     });
-  }, [series, denoiseActive, denoiseParams, column]);
+  }, [magnitudeSeries, denoiseActive, denoiseParams, column, absoluteValues]);
 
-  const yRange = useMemo(() => yRangeForSeries(effectiveSeries, column), [effectiveSeries, column]);
+  const yRange = useMemo(() => {
+    const range = yRangeForSeries(effectiveSeries, column);
+    if (!absoluteValues) return range;
+    const values = effectiveSeries.flatMap((s) => s.points.map((p) => p[s.column ?? column] as number)).filter(Number.isFinite);
+    if (!values.length) return { min: 0, max: 1 };
+    let maximum = 0;
+    for (const value of values) maximum = Math.max(maximum, value);
+    return { min: 0, max: maximum > 0 ? maximum * 1.05 : 1e-12 };
+  }, [effectiveSeries, column, absoluteValues]);
 
   const eventAnnotations = useMemo(() => {
     if (!colorByEvent) return [];
@@ -329,7 +346,7 @@ export default function OverlayChart({
     const datasets = visibleSeries.map((s) => {
         const col = seriesColumn(s, column);
         const pts = s.points;
-        const dash = s.borderDash ?? [];
+        const dash: number[] = [];
         const neutral = "#94a3b8";
         const baseColor = colorByEvent ? neutral : s.color;
         return {
@@ -410,7 +427,7 @@ export default function OverlayChart({
                   ev = ` · ${cap}`;
                 }
               }
-              return `${item.dataset.label ?? ""}: ${(item.parsed.y ?? 0).toFixed(6)} ${yUnit}${ev}`;
+              return `${item.dataset.label ?? ""}: ${absoluteValues ? formatCurrent(item.parsed.y ?? 0) : (item.parsed.y ?? 0).toFixed(6)} ${yUnit}${ev}`;
             },
           },
         },
@@ -429,7 +446,7 @@ export default function OverlayChart({
         y: {
           min: yRange.min,
           max: yRange.max,
-          ticks: { maxTicksLimit: 10, font: { size: 8 }, color: "#666" },
+          ticks: { maxTicksLimit: 10, font: { size: 8 }, color: "#666", ...(absoluteValues ? { callback: (value: string | number) => formatCurrent(Number(value)) } : {}) },
           grid: { color: "rgba(0,0,0,0.06)" },
         },
       },
@@ -449,18 +466,19 @@ export default function OverlayChart({
       eventLabels,
       resolveEventVisual,
       denoiseActive,
+      absoluteValues,
     ]
   );
 
   const hasData = series.some((s) => s.points.length > 0);
 
   const handleExport = useCallback(() => {
-    const csv = buildChartCsv(series, column);
+    const csv = buildChartCsv(magnitudeSeries, column);
     if (!csv) return;
     const prefix = pageTitle ? sanitizeFilename(pageTitle) + "_" : "";
     const fname = prefix + sanitizeFilename(title) + ".csv";
     downloadCsv(csv, fname);
-  }, [series, column, title, pageTitle]);
+  }, [magnitudeSeries, column, title, pageTitle]);
 
   const pxToElapsedMs = useCallback((clientX: number): number | null => {
     const chart = chartRef.current;

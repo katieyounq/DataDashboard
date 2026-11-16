@@ -145,7 +145,6 @@ export default function RawDataDisplay({
     [selectedSlots]
   );
 
-  const groupPrefix = slotsSorted.length ? slotsSorted.join("+") : "—";
 
   const ROLE_COLORS = { ur: "#ef4444", ul: "#3b82f6", ll: "#22c55e" };
 
@@ -274,7 +273,7 @@ export default function RawDataDisplay({
   const manyRefs = refSelections.length > 4;
   const [expandRefTiles, setExpandRefTiles] = useState(false);
   const showRefIndividualStrip =
-    refSelections.length > 1 && (!manyRefs || expandRefTiles);
+    refSelections.length > 0 && (!manyRefs || expandRefTiles);
 
   const refHeroHeight = refSelections.length > 8 ? 280 : refSelections.length > 4 ? 260 : 220;
   const refLegendMaxH = refSelections.length > 6 ? 88 : refSelections.length > 3 ? 72 : undefined;
@@ -371,13 +370,13 @@ export default function RawDataDisplay({
                 <span className="color-key-group">
                   <span className="color-key-title">Lines:</span>
                   <span className="color-key-item">
-                    <span className="color-key-line color-key-line--dashed" style={{ borderColor: ROLE_COLORS.ul }} />UL (dash)
+                    <span className="color-key-line" style={{ borderColor: ROLE_COLORS.ul }} />UL (solid)
                   </span>
                   <span className="color-key-item">
                     <span className="color-key-line" style={{ borderColor: ROLE_COLORS.ur }} />UR (solid)
                   </span>
                   <span className="color-key-item">
-                    <span className="color-key-line color-key-line--dotdash" style={{ borderColor: ROLE_COLORS.ll }} />LL (dot-dash)
+                    <span className="color-key-line" style={{ borderColor: ROLE_COLORS.ll }} />LL (solid)
                   </span>
                 </span>
                 {eventColorKey.length > 0 && (
@@ -569,13 +568,13 @@ export default function RawDataDisplay({
                 <span className="color-key-group">
                   <span className="color-key-title">Lines:</span>
                   <span className="color-key-item">
-                    <span className="color-key-line color-key-line--dashed" style={{ borderColor: ROLE_COLORS.ul }} />UL−LL (dash)
+                    <span className="color-key-line" style={{ borderColor: ROLE_COLORS.ul }} />UL−LL (solid)
                   </span>
                   <span className="color-key-item">
                     <span className="color-key-line" style={{ borderColor: ROLE_COLORS.ur }} />UR−UL (solid)
                   </span>
                   <span className="color-key-item">
-                    <span className="color-key-line color-key-line--dotdash" style={{ borderColor: ROLE_COLORS.ll }} />UR−LL (dot-dash)
+                    <span className="color-key-line" style={{ borderColor: ROLE_COLORS.ll }} />UR−LL (solid)
                   </span>
                 </span>
                 {eventColorKey.length > 0 && (
@@ -668,13 +667,13 @@ export default function RawDataDisplay({
                   <span className="color-key-group">
                     <span className="color-key-title">Lines ({diffSlotA} − {diffSlotB}):</span>
                     <span className="color-key-item">
-                      <span className="color-key-line color-key-line--dashed" style={{ borderColor: ROLE_COLORS.ul }} />UL (dash)
+                      <span className="color-key-line" style={{ borderColor: ROLE_COLORS.ul }} />UL (solid)
                     </span>
                     <span className="color-key-item">
                       <span className="color-key-line" style={{ borderColor: ROLE_COLORS.ur }} />UR (solid)
                     </span>
                     <span className="color-key-item">
-                      <span className="color-key-line color-key-line--dotdash" style={{ borderColor: ROLE_COLORS.ll }} />LL (dot-dash)
+                      <span className="color-key-line" style={{ borderColor: ROLE_COLORS.ll }} />LL (solid)
                     </span>
                   </span>
                 </div>
@@ -752,11 +751,14 @@ export default function RawDataDisplay({
               {refSelections.length > 0 && (
                 <div className="ref-hero-wrap">
                   <OverlayChart pageTitle="Raw Data"
-                    title={`${groupPrefix} — all selected REF`}
+                    title="All selected REFs"
                     series={refOverlaySeries}
                     column={VALUE_COL}
                     height={refHeroHeight}
                     legendMaxHeight={refLegendMaxH}
+                    colorByEvent={refSelections.length === 1}
+                    eventLabels={eventLabels}
+                    resolveEventVisual={resolvePointEventVisual}
                     onRangeSelect={onRangeSelect} globalDenoise={globalDenoise} denoiseParams={denoiseParams}
                   />
                 </div>
@@ -780,7 +782,10 @@ export default function RawDataDisplay({
                             },
                           ]}
                           column={VALUE_COL}
-                          height={150}
+                          height={190}
+                          colorByEvent
+                          eventLabels={eventLabels}
+                          resolveEventVisual={resolvePointEventVisual}
                           showLegend={false}
                           onRangeSelect={onRangeSelect} globalDenoise={globalDenoise} denoiseParams={denoiseParams}
                         />
@@ -898,7 +903,10 @@ export default function RawDataDisplay({
                     },
                   ]}
                   column={ts.yColumn}
-                  height={160}
+                  colorByEvent
+                  eventLabels={eventLabels}
+                  resolveEventVisual={resolvePointEventVisual}
+                  height={190}
                   showLegend={false}
                   yUnit=""
                   onRangeSelect={onRangeSelect} globalDenoise={globalDenoise} denoiseParams={denoiseParams}
@@ -910,7 +918,7 @@ export default function RawDataDisplay({
             .map((n, i) => (
               <OverlayChart pageTitle="Raw Data"
                 key={`curr-${n}`}
-                title={`CURR col ${n}`}
+                title={`|CURR| col ${n}`}
                 series={[
                   {
                     key: `curr-${n}`,
@@ -920,7 +928,11 @@ export default function RawDataDisplay({
                   },
                 ]}
                 column={colKey(n)}
-                height={160}
+                absoluteValues
+                colorByEvent
+                eventLabels={eventLabels}
+                resolveEventVisual={resolvePointEventVisual}
+                height={190}
                 showLegend={false}
                 yUnit="A"
                 onRangeSelect={onRangeSelect} globalDenoise={globalDenoise} denoiseParams={denoiseParams}

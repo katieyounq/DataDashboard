@@ -381,13 +381,13 @@ export default function PHPage({
           <span className="color-key-group">
             <span className="color-key-title">Lines:</span>
             <span className="color-key-item">
-              <span className="color-key-line color-key-line--dashed" style={{ borderColor: ROLE_COLORS.UL }} />UL (dash)
+              <span className="color-key-line" style={{ borderColor: ROLE_COLORS.UL }} />UL (solid)
             </span>
             <span className="color-key-item">
               <span className="color-key-line" style={{ borderColor: ROLE_COLORS.UR }} />UR (solid)
             </span>
             <span className="color-key-item">
-              <span className="color-key-line color-key-line--dotdash" style={{ borderColor: ROLE_COLORS.LL }} />LL (dot-dash)
+              <span className="color-key-line" style={{ borderColor: ROLE_COLORS.LL }} />LL (solid)
             </span>
           </span>
           {eventColorKey.length > 0 && (

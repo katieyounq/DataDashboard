@@ -92,11 +92,11 @@ export function compareSlots(a: string, b: string): number {
   return rowLetterToIndex(slotRowLetter(a)) - rowLetterToIndex(slotRowLetter(b));
 }
 
-/** Distinguish UR / UL / LL when line color encodes event. */
+/** Electrode identity uses color; all data traces are solid. */
 export const ADC_ROLE_BORDER_DASH = {
   ur: [] as number[],
-  ul: [7, 4] as number[],
-  ll: [2, 2, 6, 2] as number[],
+  ul: [] as number[],
+  ll: [] as number[],
 } as const;
 
 /** Short ADC number for titles, e.g. "02". */

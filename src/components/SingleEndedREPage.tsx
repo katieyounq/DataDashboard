@@ -313,13 +313,13 @@ export default function SingleEndedREPage({
           <span className="color-key-group">
             <span className="color-key-title">Lines:</span>
             <span className="color-key-item">
-              <span className="color-key-line color-key-line--dashed" style={{ borderColor: ROLE_COLORS.ul }} />UL (dash)
+              <span className="color-key-line" style={{ borderColor: ROLE_COLORS.ul }} />UL (solid)
             </span>
             <span className="color-key-item">
               <span className="color-key-line" style={{ borderColor: ROLE_COLORS.ur }} />UR (solid)
             </span>
             <span className="color-key-item">
-              <span className="color-key-line color-key-line--dotdash" style={{ borderColor: ROLE_COLORS.ll }} />LL (dot-dash)
+              <span className="color-key-line" style={{ borderColor: ROLE_COLORS.ll }} />LL (solid)
             </span>
           </span>
           {eventColorKey.length > 0 && (
