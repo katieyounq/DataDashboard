@@ -1,3 +1,4 @@
+import { EVENT_COLOR_PALETTE } from "./eventColors";
 import Papa from "papaparse";
 
 export interface DataRow {
@@ -35,21 +36,9 @@ export interface ParsedData {
   startTime: Date;
 }
 
-const EVENT_COLORS: Record<number, string> = {
-  0: "#1f77b4",
-  1: "#d62728",
-  2: "#2ca02c",
-  3: "#ff7f0e",
-  4: "#9467bd",
-  5: "#8c564b",
-  6: "#e377c2",
-  7: "#7f7f7f",
-  8: "#bcbd22",
-  9: "#17becf",
-};
-
 export function getEventColor(event: number): string {
-  return EVENT_COLORS[event % Object.keys(EVENT_COLORS).length] || "#333";
+  const index = ((event % EVENT_COLOR_PALETTE.length) + EVENT_COLOR_PALETTE.length) % EVENT_COLOR_PALETTE.length;
+  return EVENT_COLOR_PALETTE[index] || "#333";
 }
 
 /** Column in each data row that carries the user-defined event caption (after the 13 core fields). */

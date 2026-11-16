@@ -15,24 +15,8 @@ export interface DataConfigRowParsed {
   dacForceVolts?: number[];
 }
 
-/** Distinct colors for human-readable event names (not tied to numeric counter). */
-const NAME_COLOR_PALETTE = [
-  "#2563eb", "#dc2626", "#16a34a", "#ca8a04", "#9333ea", "#db2777", "#0891b2", "#ea580c",
-  "#4f46e5", "#0d9488", "#b45309", "#be123c", "#7c3aed", "#15803d", "#c026d3", "#0369a1",
-  "#b91c1c", "#65a30d", "#a21caf", "#0e7490", "#c2410c", "#4338ca", "#047857", "#9f1239",
-  "#6d28d9", "#0f766e", "#b45309", "#1d4ed8", "#15803d", "#be185d", "#7e22ce",
-];
-
-export function colorForEventName(name: string): string {
-  const n = name.trim();
-  if (!n) return "#64748b";
-  let h = 2166136261;
-  for (let i = 0; i < n.length; i++) {
-    h ^= n.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return NAME_COLOR_PALETTE[Math.abs(h) % NAME_COLOR_PALETTE.length];
-}
+import { colorForEventName } from "./eventColors";
+export { colorForEventName } from "./eventColors";
 
 export function parseDataConfigStartTimeMs(cell: string): number | null {
   const raw = (cell || "").trim().split("\t")[0];
