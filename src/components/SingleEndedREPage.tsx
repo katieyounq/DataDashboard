@@ -58,7 +58,7 @@ interface SingleEndedREPageProps {
   windowSize: number;
   onWindowSizeChange: (n: number) => void;
   rows: RERowConfig[];
-  onRowsChange: (rows: RERowConfig[]) => void;
+  onRowsChange: React.Dispatch<React.SetStateAction<RERowConfig[]>>;
   events: number[];
   eventLabels: Map<number, string>;
   hiddenEvents: Set<number>;

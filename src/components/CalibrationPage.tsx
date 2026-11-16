@@ -312,7 +312,7 @@ function CalibrationComparisonChart({
       },
       tooltip: {
         callbacks: {
-          label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(6)}`,
+          label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y?.toFixed(6) ?? "—"}`,
         },
       },
     },

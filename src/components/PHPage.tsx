@@ -94,7 +94,7 @@ interface PHPageProps {
   onToggleEvent: (evt: number) => void;
   onSetHiddenEvents?: (hidden: Set<number>) => void;
   rows: PHRowConfig[];
-  onRowsChange: (rows: PHRowConfig[]) => void;
+  onRowsChange: React.Dispatch<React.SetStateAction<PHRowConfig[]>>;
   isPolling: boolean;
   onTogglePolling: () => void;
   totalRows: number;
