@@ -1,3 +1,4 @@
+import { downloadLossTable } from "../utils/exportLossTable";
 import React, { useCallback, useMemo, useState, type ChangeEvent } from "react";
 import OverlayChart, { type OverlaySeries } from "./OverlayChart";
 import SlotPicker from "./SlotPicker";
@@ -463,6 +464,18 @@ export default function RawDataDisplay({
             return (
               <section className="chart-section loss-section">
                 <h3 className="chart-section-title">Loss (%) per Event</h3>
+                <button type="button" disabled={!sortedLossEvents.length} onClick={(e) => {
+                  const table = e.currentTarget.closest("section")?.querySelector("table");
+                  if (table) downloadLossTable(table);
+                }}>Download Excel table</button>
+                <div className="loss-heatmap-key" aria-label="Loss color scale">
+                  <span>Loss (%) color scale:</span>
+                  {[0.70, 0.75, 0.85, 0.95, 1].map((value) => (
+                    <span key={value} style={{ backgroundColor: lossHeatmapColor(value), color: lossHeatmapTextColor(value), padding: "4px 8px" }}>
+                      {value === 0.70 ? "≤ " : value === 1 ? "≥ " : ""}{value.toFixed(2)}%
+                    </span>
+                  ))}
+                </div>
                 <p className="chart-section-hint">
                   Loss = (Avg<sub>high</sub> − Avg<sub>low</sub>) / heartbeatMagnitude × 100%.
                   Avg Output = mean ADC value across all points in the event.
@@ -489,7 +502,7 @@ export default function RawDataDisplay({
                         <tr>
                           {sortedLossEvents.map((ec) => (
                             <React.Fragment key={ec}>
-                              <th className="loss-sub-header">Avg Output</th>
+                              <th className="loss-sub-header loss-event-start">Avg Output</th>
                               <th className="loss-sub-header">Loss (%)</th>
                             </React.Fragment>
                           ))}
@@ -508,14 +521,14 @@ export default function RawDataDisplay({
                             ["LL", llMap],
                           ];
                           return roles.map(([role, rMap], ri) => (
-                            <tr key={`${slot}-${role}`}>
+                            <tr key={`${slot}-${role}`} className={ri === 0 ? "loss-group-start" : undefined}>
                               {ri === 0 && <td rowSpan={3} className="loss-sensor-cell">{slot}</td>}
                               <td className="loss-role-cell">{role}</td>
                               {sortedLossEvents.map((ec) => {
                                 const r = rMap.get(ec);
                                 return (
                                   <React.Fragment key={ec}>
-                                    <td className="loss-val">{r ? r.avgOutput.toFixed(6) : "—"}</td>
+                                    <td className="loss-val loss-event-start">{r ? r.avgOutput.toFixed(6) : "—"}</td>
                                     <td className="loss-val" style={r ? { backgroundColor: lossHeatmapColor(r.loss), color: lossHeatmapTextColor(r.loss) } : undefined}>{r ? r.loss.toFixed(4) : "—"}</td>
                                   </React.Fragment>
                                 );
@@ -526,14 +539,14 @@ export default function RawDataDisplay({
                         {Array.from(lossPerRef.entries()).map(([refId, refLoss]) => {
                           const rMap = new Map(refLoss.results.map((r) => [r.eventCounter, r]));
                           return (
-                            <tr key={refId}>
+                            <tr key={refId} className="loss-group-start">
                               <td className="loss-sensor-cell">{refLoss.label}</td>
                               <td className="loss-role-cell">—</td>
                               {sortedLossEvents.map((ec) => {
                                 const r = rMap.get(ec);
                                 return (
                                   <React.Fragment key={ec}>
-                                    <td className="loss-val">{r ? r.avgOutput.toFixed(6) : "—"}</td>
+                                    <td className="loss-val loss-event-start">{r ? r.avgOutput.toFixed(6) : "—"}</td>
                                     <td className="loss-val" style={r ? { backgroundColor: lossHeatmapColor(r.loss), color: lossHeatmapTextColor(r.loss) } : undefined}>{r ? r.loss.toFixed(4) : "—"}</td>
                                   </React.Fragment>
                                 );

@@ -13,22 +13,15 @@ export interface LossResult {
   nTotal: number;
 }
 
-/**
- * Return a CSS background-color for a loss-percentage cell.
- * The value is in "×100" form (e.g. 85 means 85 %).
- *
- * Gradient (continuous):
- *   ≥ 95  → bright green  #22c55e
- *   ≈ 85  → yellow        #eab308
- *   ≈ 75  → orange-red    #ef4444
- *   ≤ 70  → dark red      #991b1b
+/** Heatmap thresholds use the displayed loss values: 0.70 red to 0.95 green.
+ * Calculations and displayed percentage units are unchanged.
  */
 export function lossHeatmapColor(lossPct: number): string {
   const stops: [number, [number, number, number]][] = [
-    [70,  [153, 27, 27]],   // #991b1b
-    [75,  [239, 68, 68]],   // #ef4444
-    [85,  [234, 179, 8]],   // #eab308
-    [95,  [34, 197, 94]],   // #22c55e
+    [0.70,  [153, 27, 27]],   // #991b1b
+    [0.75,  [239, 68, 68]],   // #ef4444
+    [0.85,  [234, 179, 8]],   // #eab308
+    [0.95,  [34, 197, 94]],   // #22c55e
   ];
 
   if (lossPct <= stops[0][0]) return `rgb(${stops[0][1].join(",")})`;
@@ -51,7 +44,7 @@ export function lossHeatmapColor(lossPct: number): string {
 
 /** Foreground color for readability against a heatmap background. */
 export function lossHeatmapTextColor(lossPct: number): string {
-  return lossPct <= 72 ? "#fff" : "#000";
+  return lossPct <= 0.72 ? "#fff" : "#000";
 }
 
 /**

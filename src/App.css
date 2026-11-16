@@ -2835,9 +2835,7 @@ body {
   color: var(--text-secondary);
 }
 
-.loss-table--pivoted .loss-sub-header:nth-child(odd) {
-  border-left: 2px solid var(--border-color);
-}
+
 
 .loss-table--pivoted .loss-sensor-cell {
   font-weight: 700;
@@ -2855,12 +2853,23 @@ body {
   text-align: right;
 }
 
-.loss-table--pivoted .loss-val:nth-child(odd) {
-  border-left: 2px solid var(--border-color);
+.loss-table--pivoted th,
+.loss-table--pivoted td {
+  border: 1px solid #94a3b8;
 }
-
-.loss-table--pivoted tbody tr:nth-child(3n) {
-  border-bottom: 2px solid var(--border-color);
+.loss-table--pivoted .loss-event-start {
+  border-left: 2px solid #475569;
+}
+.loss-table--pivoted .loss-group-start > td {
+  border-top: 2px solid #475569;
+}
+.loss-heatmap-key {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 10px 0;
+  font-size: 12px;
 }
 
 /* Scrollbar */
