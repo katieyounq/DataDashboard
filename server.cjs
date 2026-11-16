@@ -231,6 +231,11 @@ app.get("/api/poll", (req, res) => {
   });
 });
 
+app.get("/api/data-config-csv/document", (req, res) => {
+  if (!fs.existsSync(dataConfigCsvPath)) return res.status(404).json({ error: "DataConfig.csv not found" });
+  res.type("text/plain").send(fs.readFileSync(dataConfigCsvPath, "utf8"));
+});
+
 app.get("/api/data-config-csv/poll", (req, res) => {
   if (!fs.existsSync(dataConfigCsvPath)) {
     return res.json({

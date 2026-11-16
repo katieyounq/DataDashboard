@@ -97,7 +97,7 @@ export default function DataConfigCsvPanel({
         />
         <span>Watch</span>
       </label>
-      <span className="data-config-count" title="Parsed rows (time + counter + event name only)">
+      <span className="data-config-count" title="Configuration rows (all original columns retained)">
         {entryCount.toLocaleString()} rows
       </span>
       {serverPath && (

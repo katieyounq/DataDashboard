@@ -1,12 +1,11 @@
+import Papa from "papaparse";
 import type { DataRow } from "./csvParser";
 import { getEventColor } from "./csvParser";
 
-/**
- * Live / uploaded DataConfig.csv rows — only the first columns are used
- * (matches `DataConfig.csv`: startTime, eventCounter, wellSelect, eventName, …).
- * Example path (reference): `/Users/katie/Downloads/data/DataConfig.csv`
- */
+/** A parsed configuration row with original fields retained for editing and export. */
 export interface DataConfigRowParsed {
+  columns?: string[];
+  headers?: string[];
   startTimeMs: number;
   eventCounter: number;
   eventName: string;
@@ -79,7 +78,10 @@ const DCOL_DAC_FORCE_END = 39;
 
 /** Parse one body line; returns null for header or invalid. */
 export function parseDataConfigCsvLine(line: string): DataConfigRowParsed | null {
-  const cols = line.split("\t");
+  return parseDataConfigCsvColumns(line.split("\t"));
+}
+
+function parseDataConfigCsvColumns(cols: string[]): DataConfigRowParsed | null {
   if (cols.length < 4) return null;
   const c0 = cols[0].trim();
   if (/^starttime$/i.test(c0)) return null;
@@ -114,15 +116,14 @@ export function parseDataConfigCsvLine(line: string): DataConfigRowParsed | null
 }
 
 export function parseDataConfigCsvText(text: string): DataConfigRowParsed[] {
+  const parsed = Papa.parse<string[]>(text, { delimiter: text.split(/\r?\n/)[0]?.includes("\t") ? "\t" : ",", skipEmptyLines: "greedy" });
+  const [headers = [], ...body] = parsed.data;
   const out: DataConfigRowParsed[] = [];
-  const lines = text.split(/\r\n|\r|\n/);
-  for (const line of lines) {
-    if (!line.trim()) continue;
-    const row = parseDataConfigCsvLine(line);
-    if (row) out.push(row);
+  for (const columns of body) {
+    const row = parseDataConfigCsvColumns(columns);
+    if (row) out.push({ ...row, columns, headers });
   }
-  out.sort((a, b) => a.startTimeMs - b.startTimeMs || a.eventCounter - b.eventCounter);
-  return out;
+  return out.sort((a, b) => a.startTimeMs - b.startTimeMs || a.eventCounter - b.eventCounter);
 }
 
 /**

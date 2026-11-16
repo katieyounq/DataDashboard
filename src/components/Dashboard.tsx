@@ -1,3 +1,4 @@
+import DataConfigPage from "./DataConfigPage";
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import FileUpload from "./FileUpload";
 import DataConfigCsvPanel from "./DataConfigCsvPanel";
@@ -13,8 +14,8 @@ import { getDataTimeBounds, elapsedMs } from "../utils/dataTimeBounds";
 import type { RefCheckId } from "../utils/sensorLayout";
 import {
   buildEventLatestTimestamps,
-  mergeDataConfigRows,
-  scopeDataConfigEntriesToDataRange,
+  parseDataConfigCsvText,
+  parseDataConfigStartTimeMs,
   type DataConfigRowParsed,
 } from "../utils/dataConfigCsv";
 import { type DataFilter, newFilterId, applyFilters } from "../utils/dataFilters";
@@ -62,7 +63,7 @@ export default function Dashboard() {
   );
   const [tempCols, setTempCols] = useState<Set<number>>(() => new Set());
   const [currCols, setCurrCols] = useState<Set<number>>(() => new Set());
-  const [appPage, setAppPage] = useState<1 | 2 | 3 | 4>(1);
+  const [appPage, setAppPage] = useState<1 | 2 | 3 | 4 | 5>(1);
   const [calibrationEntries, setCalibrationEntries] = useState<CalibrationEntry[]>([]);
   const [combPHEntries, setCombPHEntries] = useState<CombPHCalibrationEntry[]>([]);
   const [dataFilters, setDataFilters] = useState<DataFilter[]>([]);
@@ -116,6 +117,8 @@ export default function Dashboard() {
 
   const [dataConfigEntries, setDataConfigEntries] = useState<DataConfigRowParsed[]>([]);
   const [watchDataConfigServer, setWatchDataConfigServer] = useState(true);
+  const configRevision = useRef(0);
+  const lastConfigText = useRef<string | null>(null);
 
   const startPolling = useCallback(async () => {
     try {
@@ -211,11 +214,15 @@ export default function Dashboard() {
   }, []);
 
   const pollDataConfig = useCallback(async () => {
+    const revision = configRevision.current;
     try {
-      const res = await fetch(`${API_BASE}/api/data-config-csv/poll`);
-      const data = (await res.json()) as { rows?: DataConfigRowParsed[] };
-      if (!data.rows?.length) return;
-      setDataConfigEntries((prev) => mergeDataConfigRows(prev, data.rows!));
+      const res = await fetch(`${API_BASE}/api/data-config-csv/document`);
+      if (!res.ok) return;
+      const text = await res.text();
+      if (revision === configRevision.current && text !== lastConfigText.current) {
+        lastConfigText.current = text;
+        setDataConfigEntries(parseDataConfigCsvText(text));
+      }
     } catch {
       /* API off */
     }
@@ -224,7 +231,7 @@ export default function Dashboard() {
   useEffect(() => {
     if (!watchDataConfigServer) return;
     void pollDataConfig();
-    const id = setInterval(pollDataConfig, POLL_INTERVAL_MS);
+    const id = setInterval(pollDataConfig, 2000);
     return () => clearInterval(id);
   }, [watchDataConfigServer, pollDataConfig]);
 
@@ -288,14 +295,17 @@ export default function Dashboard() {
   const displayEventLabels = mode === "live" ? liveSnapshot.eventLabels : fileEventLabels;
   const displayTotalRows = mode === "live" ? liveSnapshot.totalRows : fileTotalRows;
 
-  const fullStreamTimeBounds = useMemo(() => {
-    if (!displayTokenMap || displayTokenMap.size === 0) return null;
-    return getDataTimeBounds(displayTokenMap);
-  }, [displayTokenMap]);
 
+
+  const experimentStart = useMemo(() => {
+    for (const points of displayTokenMap?.values() ?? []) {
+      if (points.length) return parseDataConfigStartTimeMs(points[0].startTime);
+    }
+    return null;
+  }, [displayTokenMap]);
   const dataConfigScoped = useMemo(
-    () => scopeDataConfigEntriesToDataRange(dataConfigEntries, fullStreamTimeBounds),
-    [dataConfigEntries, fullStreamTimeBounds]
+    () => dataConfigEntries.filter((row) => row.startTimeMs === experimentStart),
+    [dataConfigEntries, experimentStart]
   );
 
   const handleToggleEvent = useCallback((evt: number) => {
@@ -368,6 +378,8 @@ export default function Dashboard() {
   }, [displayTokenMap]);
 
   const onReplaceDataConfigEntries = useCallback((rows: DataConfigRowParsed[]) => {
+    configRevision.current++;
+    setWatchDataConfigServer(false);
     setDataConfigEntries(rows);
   }, []);
 
@@ -425,7 +437,7 @@ export default function Dashboard() {
                 ? "Single-ended − Reference Electrode"
                 : appPage === 3
                   ? "Calibration"
-                  : "pH Display"}
+                  : appPage === 5 ? "Data Configuration" : "pH Display"}
           </h1>
           <span className="header-subtitle">
             {appPage === 1
@@ -434,7 +446,7 @@ export default function Dashboard() {
                 ? "(ADC ÷ loss) − REF per loop · page 2"
                 : appPage === 3
                   ? "Sensor calibration · page 3"
-                  : "pH = (ADC/loss − REF − offset) ÷ sensitivity · page 4"}
+                  : appPage === 5 ? "Current experiment · sensors and events" : "pH = (ADC/loss − REF − offset) ÷ sensitivity · page 4"}
           </span>
         </div>
         <div className="header-right">
@@ -445,7 +457,8 @@ export default function Dashboard() {
                 [2, "SE − RE"],
                 [3, "Calibration"],
                 [4, "pH Display"],
-              ] as [1|2|3|4, string][]).map(([pg, label]) => (
+                [5, "Data Configuration"],
+              ] as [1|2|3|4|5, string][]).map(([pg, label]) => (
                 <button
                   key={pg}
                   type="button"
@@ -555,6 +568,13 @@ export default function Dashboard() {
             </button>
           </div>
         </div>
+      ) : appPage === 5 ? (
+        <DataConfigPage key={experimentStart ?? "no-session"} entries={dataConfigEntries} experimentStart={experimentStart}
+          onSave={(rows) => {
+            configRevision.current++;
+            setWatchDataConfigServer(false);
+            setDataConfigEntries((previous) => [...previous.filter((row) => row.startTimeMs !== experimentStart), ...rows]);
+          }} />
       ) : appPage === 2 && filteredTokenMap ? (
         <div className="dashboard-body dashboard-body-stacked">
           <div className="chart-area raw-chart-area se-re-chart-area-outer">

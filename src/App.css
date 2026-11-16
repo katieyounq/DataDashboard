@@ -3079,3 +3079,20 @@ body {
   color: var(--accent);
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
+
+.config-editor { padding: 24px; max-width: 100%; min-width: 0; }
+.config-editor-toolbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.config-editor-toolbar > div { margin-right: auto; }
+.config-editor button { padding: 9px 14px; cursor: pointer; }
+.config-editor section { margin: 24px 0; padding: 20px; background: white; border: 1px solid #cbd5e1; border-radius: 10px; }
+.config-sensor-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
+.config-sensor-grid label { padding: 10px; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 6px; min-width: 0; }
+.config-sensor-grid strong { display: block; margin-bottom: 6px; }
+.config-editor input { padding: 7px; border: 1px solid #94a3b8; border-radius: 4px; width: 100%; min-width: 0; box-sizing: border-box; }
+.config-editor th, .config-editor td { padding: 7px; border: 1px solid #cbd5e1; text-align: left; }
+.config-editor table { border-collapse: collapse; }
+.config-events { width: min(100%, 800px); margin-top: 12px; }
+.config-color-swatch { display: inline-block; width: 22px; height: 22px; border-radius: 4px; border: 1px solid #64748b; }
+.config-fields-scroll { overflow: auto; max-height: 550px; }
+.config-fields-scroll th { position: sticky; top: 0; background: #f1f5f9; white-space: nowrap; }
+.config-fields-scroll input { min-width: 130px; }
