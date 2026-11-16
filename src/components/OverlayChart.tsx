@@ -170,11 +170,13 @@ function detectEventAnnotations(
     let color: string;
     if (resolveVisual) {
       const vis = resolveVisual(s.sample);
-      label = vis.caption;
+      // Only graph annotations omit the counter; legends/tooltips retain it.
+      const prefix = `${s.ec} – `;
+      label = vis.caption.startsWith(prefix) ? vis.caption.slice(prefix.length) : vis.caption;
       color = vis.color;
     } else {
       const fromMap = labelMap?.get(s.ec)?.trim();
-      label = fromMap ? `${s.ec} – ${fromMap}` : `Event ${s.ec}`;
+      label = fromMap || `Event ${s.ec}`;
       color = getEventColor(s.ec);
     }
     return {
@@ -206,13 +208,36 @@ const eventAnnotationPlugin = {
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
 
+    const rowEnds = [area.left - 6, area.left - 6, area.left - 6];
+    let preferredRow = 0;
     for (const ann of annotations) {
       const px = scale.getPixelForValue(ann.midMs);
       if (px < area.left || px > area.right) continue;
 
-      // Draw label
-      ctx.fillStyle = ann.color;
-      ctx.fillText(ann.label, px, area.top + 2);
+      // Alternate rows, measuring actual text so nearby names do not collide.
+      const width = Math.min(ctx.measureText(ann.label).width, area.right - area.left);
+      const left = Math.max(area.left, Math.min(px - width / 2, area.right - width));
+      const candidates = [preferredRow, 1 - preferredRow, 2];
+      let row = candidates.find((r) => rowEnds[r] + 6 <= left);
+      if (row === undefined) {
+        row = rowEnds.indexOf(Math.min(...rowEnds));
+      }
+      const labelLeft = Math.max(left, rowEnds[row] + 6);
+      const available = area.right - labelLeft;
+      let text = ann.label;
+      if (ctx.measureText(text).width > available) {
+        while (text.length && ctx.measureText(`${text}…`).width > available) {
+          text = text.slice(0, -1);
+        }
+        text = text ? `${text}…` : "";
+      }
+      if (text) {
+        ctx.fillStyle = ann.color;
+        ctx.textAlign = "left";
+        ctx.fillText(text, labelLeft, area.top - 42 + row * 13);
+        rowEnds[row] = labelLeft + ctx.measureText(text).width;
+        preferredRow = row === 0 ? 1 : 0;
+      }
 
       // Draw subtle vertical line at event start
       const startPx = scale.getPixelForValue(ann.startMs);
@@ -296,6 +321,7 @@ export default function OverlayChart({
   useEffect(() => {
     if (chartRef.current) {
       (chartRef.current as any).__eventAnnotations = eventAnnotations;
+      chartRef.current.draw();
     }
   }, [eventAnnotations]);
 
@@ -349,7 +375,7 @@ export default function OverlayChart({
           display: true,
           text: denoiseActive ? `${title} (Denoised)` : title,
           font: { size: 11, weight: "bold" as const },
-          padding: { top: 2, bottom: 4 },
+          padding: { top: 2, bottom: colorByEvent ? 46 : 4 },
           color: "#1a1a2e",
         },
         legend: {
